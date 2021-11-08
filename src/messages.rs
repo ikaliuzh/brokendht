@@ -1,47 +1,27 @@
-pub type Buffer = Vecc<u8>;
+use serde::{Serialize, Deserialize};
+use bincode;
 
-#[derive(Debug, PartialEq)]
+pub type Buffer = Vec<u8>;
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum DhtAction {
-	Insert {key: Key, val: Value},
-	Lookup {key: Key },
-	Delete {key: Key },
+	Insert { key: Key, val: Value },
+	Lookup { key: Key },
+	Delete { key: Key },
 
 	Uninitialized,
 }
 
-// impl From<String> for DhtAction {
-// 	fn from(data: String) -> DhtAction {
-// 		let mut data = data.split_whitespace();
 
-// 		let act = data.next().unwrap();
-// 		let key = data.next().unwrap().parse::<i32>().unwrap();
-		
-// 		match act {
-// 			"0" | "insert" => { // insert
-// 				DhtAction::Insert{ key, val: data.next().unwrap().parse::<i32>().unwrap() }
-// 			}, 
-// 			"1" | "lookup" => { // lookup
-// 				DhtAction::Lookup{ key }
-// 			},
-// 			"2" | "delete" => { // delete
-// 				DhtAction::Delete{ key } 
-// 			}
-// 			_ => {
-// 				DhtAction::Uninitialized
-// 			}
-// 		}
-// 	}
-// }
-
-
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Key{
-
+	pub key: Buffer,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum Value{
-
+	None,
+	Value { content: Buffer },
 }
 
 #[cfg(test)]
@@ -49,10 +29,8 @@ mod tests {
 	use super::*;
 
 	#[test]
-	fn test_dhtaction_into() {
-		let res: DhtAction = String::from("insert 25 16").into();
-
-		assert_eq!(DhtAction::Insert{key: 25, val: 16}, res);
+	fn test_dhtaction() {
+		
 	}
 
 }

@@ -47,10 +47,16 @@ impl<'a> Server<'a> {
         
         match stream.read(&mut buffer) {
             Ok(_) => {
-                let request: DhtAction = String::from_utf8(
-                    buffer.to_vec().into()
-                        ).unwrap();
-                handle_request(&mut request);
+                let request: DhtAction = match
+                    bincode::deserialize::<DhtAction>(&buffer) {
+                        Ok(m) => m,
+                        Err(_) => {
+                            println!("Failed to deserialize the request");
+                        }
+                    };
+
+
+                handle_request(request);
             },
             Err(_) => {
                 println!("An error occurred, terminating connection with {}",
