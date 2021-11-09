@@ -2,7 +2,7 @@ use crate::messages::*;
 use crate::server::*;
 
 
-use std::net::{IpAddr, Ipv4Addr};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 pub mod messages;
 pub mod server;
@@ -17,9 +17,9 @@ fn main() {
     println!("{:?}\n", bincode::deserialize::<DhtAction>(&bincode::serialize(&act).unwrap()));
 
 
-    let socket = DhtServerAddr::new( 
+    let socket = SocketAddr::new( 
             IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080
         );
 
-    println!("{:?}", socket.hash());
+    println!("{:?}", socket.ring_hash());
 }

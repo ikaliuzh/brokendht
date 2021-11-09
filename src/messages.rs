@@ -1,7 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
+// use std::hash::{Hash, Hasher};
 
 pub type Buffer = Vec<u8>;
 
@@ -37,14 +36,6 @@ pub enum DhtError {
 #[derive(Hash, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Key {
 	pub key: Buffer,
-}
-
-impl Key {
-	pub fn hash(&self) -> u64 {
-		let mut hasher = DefaultHasher::new();
-		let _ = &self.key.hash(&mut hasher);
-		hasher.finish()
-	}
 }
 
 

@@ -1,4 +1,4 @@
-use::std::thread;
+// use::std::thread;
 use std::io::prelude::*;
 use std::collections::{hash_map::DefaultHasher};
 use std::hash::{Hash, Hasher};
@@ -8,55 +8,48 @@ use crate::messages::*;
 use crate::storage::*;
 
 
-#[derive(Debug)]
-pub struct DhtServerAddr {
-    pub socket: SocketAddr,
-}
-
-impl DhtServerAddr {
-    pub fn new(ipaddr: IpAddr, port: u16) -> DhtServerAddr {
-        DhtServerAddr { socket: SocketAddr::new(ipaddr, port) }
-    }
-
-    pub fn new_local(port: u16) -> DhtServerAddr {
-        DhtServerAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), port)
-    }
-
-    pub fn hash(&self) -> u64 {
+pub trait RingHash: Hash {
+    fn ring_hash(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
-        let _ = &self.socket.hash(&mut hasher);
+        let _ = &self.hash(&mut hasher);
         hasher.finish()
     }
 }
 
+
+impl RingHash for SocketAddr {} 
+impl RingHash for Key {}
+
 pub struct Server {
-    socket_addr: DhtServerAddr,
-    fingertable: Vec<DhtServerAddr>, // fingertable[i] -> 2^i successor
+    socket_addr: SocketAddr,
+    fingertable: Vec<SocketAddr>, // fingertable[i] -> 2^i successor
     storage: StorageMap,
 }
 
 impl Server {
     pub fn new(port: u16) -> Self {
+        println!("Runninf on localhost:{}", port);
         Server { 
-            socket_addr: DhtServerAddr::new_local(port),
+            socket_addr: SocketAddr::new(
+                    IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), port),
             fingertable: vec![],
             storage: StorageMap::new(),
         }
     }
 
-    pub fn run(&self) {
-        let conn_listener = TcpListener::bind(self.socket_addr.socket)
-            .expect(&format!("Failed to connect to socket {}", self.socket_addr.socket));
-        println!("Running on {}", self.socket_addr.socket);
+    pub fn run(&mut self) {
+        let conn_listener = TcpListener::bind(self.socket_addr)
+            .expect(&format!("Failed to connect to socket {}", self.socket_addr));
+        println!("Running on {}", self.socket_addr);
 
         for stream in conn_listener.incoming() {
             match stream {
                 Ok(stream) => {
                     println!("New connection: {}", stream.peer_addr().unwrap());
-                    let handle = thread::spawn(move||{
-                         self.handle_connection(stream)
-                    });
-                    handle.join().unwrap();
+                    //let handle = thread::spawn(move||{
+                    self.handle_connection(stream);
+                    //});
+                    // handle.join().unwrap();
                 },
                 Err(e) => {
                     println!("Error: {}", e);
@@ -68,7 +61,7 @@ impl Server {
     }
 
 
-    fn handle_connection(&self, mut stream: TcpStream) {
+    fn handle_connection(&mut self, mut stream: TcpStream) {
         let mut buffer = [0; 1024];
         
         match stream.read(&mut buffer) {
@@ -76,8 +69,7 @@ impl Server {
                 let request: DhtAction = 
                     bincode::deserialize::<DhtAction>(&buffer).unwrap();
 
-
-                &self.handle_request(request);
+                let _ = &self.handle_request(request);
             },
             Err(_) => {
                 println!("An error occurred, terminating connection with {}",
